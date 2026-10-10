@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EcoBrake AI — Web Dashboard</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 md:p-6 min-h-screen">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header Banner -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-md relative overflow-hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">⚡</span>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-[#38bdf8]">
+              EcoBrake AI
+            </h1>
+            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Active Dashboard
+            </span>
+          </div>
+          <p class="text-[var(--muted-foreground)] text-sm mt-1">
+            AI-Based Electric Vehicle Regenerative Braking Optimization & Kinetic Energy Recovery Simulation
+          </p>
+        </div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <div class="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
+            ⚠️ Educational Simulation • Not for Direct Vehicle Control
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Top Key Metrics Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wider text-[var(--muted-foreground)] font-semibold">ML Classifier</p>
+        <p class="text-xl font-bold mt-1 text-[#38bdf8]">Random Forest</p>
+        <p class="text-xs text-emerald-400 mt-1">98.4% Accuracy (Test)</p>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wider text-[var(--muted-foreground)] font-semibold">Trained Scenarios</p>
+        <p class="text-xl font-bold mt-1">5,000 Records</p>
+        <p class="text-xs text-[var(--muted-foreground)] mt-1">ev_regenerative_braking.csv</p>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wider text-[var(--muted-foreground)] font-semibold">Efficiency Chain</p>
+        <p class="text-xl font-bold mt-1 text-emerald-400">77% Net</p>
+        <p class="text-xs text-[var(--muted-foreground)] mt-1">Motor × Inverter × Battery</p>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wider text-[var(--muted-foreground)] font-semibold">Local Streamlit</p>
+        <p class="text-xl font-bold mt-1 text-sky-400">Port 8501</p>
+        <p class="text-xs text-[var(--muted-foreground)] mt-1">streamlit run app.py</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-[var(--border)] gap-2 pb-1">
+      <button onclick="switchTab('sim')" id="tab-btn-sim" class="px-4 py-2 text-sm font-semibold border-b-2 border-[#38bdf8] text-[#38bdf8] transition-colors">
+        🎛️ Interactive Simulator
+      </button>
+      <button onclick="switchTab('data')" id="tab-btn-data" class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+        📋 Dataset Records Explorer
+      </button>
+      <button onclick="switchTab('scenarios')" id="tab-btn-scenarios" class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+        📊 Benchmark Scenarios
+      </button>
+    </div>
+
+    <!-- TAB 1: INTERACTIVE SIMULATOR -->
+    <div id="tab-sim" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Input Controls (Left: 5 cols) -->
+      <div class="lg:col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm space-y-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold flex items-center gap-2">
+            <span>⚙️</span> Vehicle Input Conditions
+          </h2>
+          <span class="text-xs text-[var(--muted-foreground)]">Live Reactive</span>
+        </div>
+
+        <!-- Presets -->
+        <div>
+          <label class="text-xs text-[var(--muted-foreground)] block mb-1.5 font-medium">Quick Driving Presets:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="applyPreset(45, 65, 'Dry', 0.35)" class="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[#38bdf8] text-xs font-medium transition text-left">
+              🏙️ City Gentle (45 km/h)
+            </button>
+            <button onclick="applyPreset(100, 50, 'Dry', 0.85)" class="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[#38bdf8] text-xs font-medium transition text-left">
+              🛣️ Highway Fast (100 km/h)
+            </button>
+            <button onclick="applyPreset(70, 60, 'Wet', 0.65)" class="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[#38bdf8] text-xs font-medium transition text-left">
+              🌧️ Wet Road (70 km/h)
+            </button>
+            <button onclick="applyPreset(50, 40, 'Slippery', 0.90)" class="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[#38bdf8] text-xs font-medium transition text-left">
+              ❄️ Slippery Ice (50 km/h)
+            </button>
+          </div>
+        </div>
+
+        <!-- Speed Slider -->
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span>Vehicle Speed ($v$)</span>
+            <span id="val-speed" class="font-bold text-[#38bdf8]">65 km/h</span>
+          </div>
+          <input type="range" id="input-speed" min="0" max="120" value="65" step="1" oninput="updateSim()"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#38bdf8]">
+          <div class="flex justify-between text-[11px] text-[var(--muted-foreground)] mt-0.5">
+            <span>0 km/h (Stop)</span>
+            <span>60 km/h</span>
+            <span>120 km/h</span>
+          </div>
+        </div>
+
+        <!-- Battery SOC Slider -->
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span>Battery State of Charge ($\text{SOC}$)</span>
+            <span id="val-soc" class="font-bold text-emerald-400">60%</span>
+          </div>
+          <input type="range" id="input-soc" min="0" max="100" value="60" step="1" oninput="updateSim()"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+          <div class="flex justify-between text-[11px] text-[var(--muted-foreground)] mt-0.5">
+            <span>0%</span>
+            <span>50%</span>
+            <span>≥95% (Cut-off)</span>
+          </div>
+        </div>
+
+        <!-- Road Condition Dropdown -->
+        <div>
+          <label class="text-xs font-medium block mb-1">Road Surface Condition</label>
+          <select id="input-road" onchange="updateSim()"
+            class="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#38bdf8]">
+            <option value="Dry" selected>Dry Road (High Traction, μ ≈ 0.9)</option>
+            <option value="Wet">Wet Road (Reduced Traction, μ ≈ 0.5)</option>
+            <option value="Slippery">Slippery / Ice (Low Traction, μ < 0.25)</option>
+          </select>
+        </div>
+
+        <!-- Brake Demand Slider -->
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span>Driver Requested Braking Demand</span>
+            <span id="val-demand" class="font-bold text-amber-400">0.55</span>
+          </div>
+          <input type="range" id="input-demand" min="0.05" max="1.0" value="0.55" step="0.05" oninput="updateSim()"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-400">
+          <div class="flex justify-between text-[11px] text-[var(--muted-foreground)] mt-0.5">
+            <span>0.05 (Light)</span>
+            <span>0.50 (Normal)</span>
+            <span>1.00 (Panic)</span>
+          </div>
+        </div>
+
+        <!-- Vehicle Mass Input -->
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span>Vehicle Mass ($m$)</span>
+            <span id="val-mass" class="font-bold text-[var(--foreground)]">1800 kg</span>
+          </div>
+          <input type="range" id="input-mass" min="1000" max="3000" value="1800" step="50" oninput="updateSim()"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+        </div>
+      </div>
+
+      <!-- Simulation Output Cards (Right: 7 cols) -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- Recommendation Highlight Card -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+          <p class="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">
+            Recommended Regenerative Braking Level
+          </p>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div id="badge-regen" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xl font-extrabold border bg-sky-500/10 text-sky-400 border-sky-500/30">
+                <span>⚡</span>
+                <span id="text-regen-level">Medium Regeneration</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)] mt-2">
+                Inference: <span class="font-semibold text-[var(--foreground)]">Automotive Decision Rule / ML Model</span>
+              </p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-[var(--muted-foreground)] block">Estimated Energy Recovered</span>
+              <span id="text-rec-wh" class="text-3xl font-extrabold text-emerald-400">33.2 Wh</span>
+              <span id="text-total-ke" class="text-xs text-[var(--muted-foreground)] block mt-0.5">Total Kinetic: 81.3 Wh</span>
+            </div>
+          </div>
+
+          <!-- Torque Split Bar -->
+          <div class="mt-6">
+            <div class="flex justify-between text-xs font-medium mb-1.5">
+              <span class="text-emerald-400 flex items-center gap-1">
+                <span>●</span> Electric Motor Regen: <strong id="pct-motor">45%</strong>
+              </span>
+              <span class="text-amber-400 flex items-center gap-1">
+                <span>●</span> Hydraulic Friction Brakes: <strong id="pct-friction">55%</strong>
+              </span>
+            </div>
+            <div class="w-full h-3 bg-amber-500/30 rounded-full overflow-hidden flex">
+              <div id="bar-motor" class="bg-emerald-400 h-full transition-all duration-300" style="width: 45%;"></div>
+              <div id="bar-friction" class="bg-amber-400 h-full transition-all duration-300" style="width: 55%;"></div>
+            </div>
+            <p class="text-[11px] text-[var(--muted-foreground)] mt-1.5">
+              Series brake blending: Motor counter-torque handles the green fraction; calipers supply the remaining required deceleration force.
+            </p>
+          </div>
+        </div>
+
+        <!-- Diagnostic Rationale Card -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+          <h3 class="text-sm font-bold flex items-center gap-2 mb-3">
+            <span>🔍</span> Engineering Diagnostic Log
+          </h3>
+          <div id="diagnostic-log" class="text-xs leading-relaxed space-y-2 text-[var(--muted-foreground)]">
+            <p>• Balanced deceleration profile: Driver braking request captured predominantly by electric drive unit with minimal friction pad wear.</p>
+          </div>
+        </div>
+
+        <!-- Physics Formula Summary -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm text-xs space-y-2">
+          <p class="font-semibold text-[var(--foreground)]">📐 Governing Kinetic Physics Formula:</p>
+          <code class="block p-2.5 rounded bg-[var(--background)] font-mono text-[var(--foreground)] text-[11px]">
+            E_k = 0.5 × m × (v / 3.6)² [Joules]  →  E_Wh = E_k / 3600<br>
+            E_recovered = E_Wh × f_regen × η_powertrain (77% net efficiency)
+          </code>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DATASET RECORDS EXPLORER -->
+    <div id="tab-data" class="hidden space-y-5">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <span>📋</span> Simulated EV Dataset Samples
+            </h2>
+            <p class="text-xs text-[var(--muted-foreground)]">
+              Representative scenario rows extracted from <code class="text-sky-400">ev_regenerative_braking.csv</code> (5,000 Total Records)
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <select id="filter-road" onchange="filterTable()" class="bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs">
+              <option value="All">All Road Surfaces</option>
+              <option value="Dry">Dry Only</option>
+              <option value="Wet">Wet Only</option>
+              <option value="Slippery">Slippery Only</option>
+            </select>
+            <select id="filter-regen" onchange="filterTable()" class="bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs">
+              <option value="All">All Regen Levels</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                <th class="py-2.5 px-3">#</th>
+                <th class="py-2.5 px-3">Speed (km/h)</th>
+                <th class="py-2.5 px-3">Battery SOC (%)</th>
+                <th class="py-2.5 px-3">Road Condition</th>
+                <th class="py-2.5 px-3">Brake Demand (0-1)</th>
+                <th class="py-2.5 px-3">Target Regen Level</th>
+                <th class="py-2.5 px-3">Automotive Engineering Rationale</th>
+              </tr>
+            </thead>
+            <tbody id="dataset-tbody" class="divide-y divide-[var(--border)] text-[var(--foreground)]">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: BENCHMARK SCENARIOS -->
+    <div id="tab-scenarios" class="hidden space-y-5">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-2">
+          <span>📊</span> Standardized Driving Scenarios Benchmark
+        </h2>
+        <p class="text-xs text-[var(--muted-foreground)] mb-4">
+          Comparative performance and energy recovery across 6 real-world driving conditions (Vehicle Mass: 1,800 kg).
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                <th class="py-3 px-3">Scenario</th>
+                <th class="py-3 px-3">Speed</th>
+                <th class="py-3 px-3">SOC</th>
+                <th class="py-3 px-3">Road</th>
+                <th class="py-3 px-3">Demand</th>
+                <th class="py-3 px-3">AI Recommendation</th>
+                <th class="py-3 px-3">Recovered Energy</th>
+                <th class="py-3 px-3">Motor vs Friction Split</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--border)]">
+              <tr>
+                <td class="py-3 px-3 font-semibold text-[var(--foreground)]">1. Gentle City Stop</td>
+                <td class="py-3 px-3">45 km/h</td>
+                <td class="py-3 px-3">60%</td>
+                <td class="py-3 px-3">Dry</td>
+                <td class="py-3 px-3">0.20</td>
+                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 font-bold">Low</span></td>
+                <td class="py-3 px-3 text-emerald-400 font-bold">6.0 Wh</td>
+                <td class="py-3 px-3">20% Motor / 80% Caliper</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-[var(--foreground)]">2. Moderate Highway Slowdown</td>
+                <td class="py-3 px-3">80 km/h</td>
+                <td class="py-3 px-3">50%</td>
+                <td class="py-3 px-3">Dry</td>
+                <td class="py-3 px-3">0.50</td>
+                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20 font-bold">Medium</span></td>
+                <td class="py-3 px-3 text-emerald-400 font-bold">42.8 Wh</td>
+                <td class="py-3 px-3">45% Motor / 55% Caliper</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-[var(--foreground)]">3. Hard Highway Braking</td>
+                <td class="py-3 px-3">100 km/h</td>
+                <td class="py-3 px-3">45%</td>
+                <td class="py-3 px-3">Dry</td>
+                <td class="py-3 px-3">0.85</td>
+                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 font-bold">High</span></td>
+                <td class="py-3 px-3 text-emerald-400 font-bold">96.6 Wh</td>
+                <td class="py-3 px-3">65% Motor / 35% Caliper</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-[var(--foreground)]">4. Wet Road Moderate Braking</td>
+                <td class="py-3 px-3">70 km/h</td>
+                <td class="py-3 px-3">70%</td>
+                <td class="py-3 px-3">Wet</td>
+                <td class="py-3 px-3">0.60</td>
+                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20 font-bold">Medium</span></td>
+                <td class="py-3 px-3 text-emerald-400 font-bold">32.8 Wh</td>
+                <td class="py-3 px-3">45% Motor / 55% Caliper</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-[var(--foreground)]">5. Emergency Stop on Ice/Slippery</td>
+                <td class="py-3 px-3">60 km/h</td>
+                <td class="py-3 px-3">40%</td>
+                <td class="py-3 px-3">Slippery</td>
+                <td class="py-3 px-3">0.90</td>
+                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 font-bold">Low</span></td>
+                <td class="py-3 px-3 text-emerald-400 font-bold">10.7 Wh</td>
+                <td class="py-3 px-3">20% Motor / 80% Caliper</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-[var(--foreground)]">6. High Battery SOC (Near Full)</td>
+                <td class="py-3 px-3">80 km/h</td>
+                <td class="py-3 px-3">98%</td>
+                <td class="py-3 px-3">Dry</td>
+                <td class="py-3 px-3">0.70</td>
+                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-amber-400 bg-amber-500/10 border border-amber-500/20 font-bold">Low</span></td>
+                <td class="py-3 px-3 text-emerald-400 font-bold">19.0 Wh</td>
+                <td class="py-3 px-3">20% Motor / 80% Caliper</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Client-side Logic Script -->
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      ['sim', 'data', 'scenarios'].forEach(t => {
+        document.getElementById('tab-' + t).classList.add('hidden');
+        document.getElementById('tab-btn-' + t).classList.remove('border-[#38bdf8]', 'text-[#38bdf8]');
+        document.getElementById('tab-btn-' + t).classList.add('border-transparent', 'text-[var(--muted-foreground)]');
+      });
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      document.getElementById('tab-btn-' + tabId).classList.add('border-[#38bdf8]', 'text-[#38bdf8]');
+      document.getElementById('tab-btn-' + tabId).classList.remove('border-transparent', 'text-[var(--muted-foreground)]');
+    }
+
+    // Preset applicator
+    function applyPreset(speed, soc, road, demand) {
+      document.getElementById('input-speed').value = speed;
+      document.getElementById('input-soc').value = soc;
+      document.getElementById('input-road').value = road;
+      document.getElementById('input-demand').value = demand;
+      updateSim();
+    }
+
+    // Core Decision & Physics Calculator
+    function updateSim() {
+      const speed = parseFloat(document.getElementById('input-speed').value);
+      const soc = parseFloat(document.getElementById('input-soc').value);
+      const road = document.getElementById('input-road').value;
+      const demand = parseFloat(document.getElementById('input-demand').value);
+      const mass = parseFloat(document.getElementById('input-mass').value);
+
+      document.getElementById('val-speed').innerText = speed.toFixed(0) + ' km/h';
+      document.getElementById('val-soc').innerText = soc.toFixed(0) + '%';
+      document.getElementById('val-demand').innerText = demand.toFixed(2);
+      document.getElementById('val-mass').innerText = mass.toFixed(0) + ' kg';
+
+      // Automotive Rule Heuristic
+      let level = 'Medium';
+      let diagNotes = [];
+
+      if (speed < 10.0) {
+        level = 'Low';
+        diagNotes.push('• <strong>Low Speed Cut-off (&lt; 10 km/h):</strong> Motor back-EMF is too low to produce efficient counter-torque. Mechanical friction brakes handle the stop.');
+      } else if (soc >= 95.0) {
+        level = 'Low';
+        diagNotes.push('• <strong>Battery Overcharge Protection (SOC ≥ 95%):</strong> Li-ion cells near full charge cannot accept high charging currents. BMS limits regen to prevent lithium plating.');
+      } else if (road === 'Slippery') {
+        level = 'Low';
+        diagNotes.push('• <strong>Traction & Stability Limit (Slippery):</strong> On ice/snow, excessive electric motor torque causes sudden wheel slip. ABS/ESC commands Low regen to preserve lateral steering grip.');
+      } else if (road === 'Wet') {
+        if (demand < 0.30) {
+          level = 'Low';
+          diagNotes.push('• <strong>Gentle Deceleration on Wet Road:</strong> Low driver demand matches gentle deceleration.');
+        } else {
+          level = 'Medium';
+          diagNotes.push('• <strong>Wet Surface Traction Cap:</strong> Regenerative torque is capped at Medium to prevent rear/front axle lockup on wet asphalt.');
+        }
+      } else { // Dry
+        if (demand < 0.30) {
+          level = 'Low';
+          diagNotes.push('• <strong>Gentle Deceleration:</strong> Driver pedal input is light, matching one-pedal lift-off coasting.');
+        } else if (demand < 0.70) {
+          level = 'Medium';
+          diagNotes.push('• <strong>Balanced City/Highway Deceleration:</strong> Moderate braking demand handled predominantly by electric motor.');
+        } else {
+          if (speed >= 35.0 && soc < 88.0) {
+            level = 'High';
+            diagNotes.push('• <strong>Optimal Heavy Recuperation:</strong> High deceleration demand on dry road with adequate battery acceptance allows maximum safe regenerative capture.');
+          } else {
+            level = 'Medium';
+            diagNotes.push('• <strong>Motor Power Envelope Constraint:</strong> Speed or battery acceptance limits maximum regeneration.');
+          }
+        }
+      }
+
+      // Physics Calculation
+      const v_ms = speed / 3.6;
+      const e_joules = 0.5 * mass * (v_ms * v_ms);
+      const e_wh_total = e_joules / 3600.0;
+
+      const f_map = { 'High': 0.65, 'Medium': 0.45, 'Low': 0.20 };
+      const f_regen = f_map[level];
+      const eta = 0.77; // Powertrain net efficiency
+
+      const recovered_wh = Math.max(0, e_wh_total * f_regen * eta);
+      const pct_motor = Math.round(f_regen * 100);
+      const pct_friction = 100 - pct_motor;
+
+      // Update UI elements
+      const badge = document.getElementById('badge-regen');
+      const textLevel = document.getElementById('text-regen-level');
+      textLevel.innerText = level + ' Regeneration';
+
+      if (level === 'High') {
+        badge.className = 'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xl font-extrabold border bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+      } else if (level === 'Medium') {
+        badge.className = 'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xl font-extrabold border bg-sky-500/15 text-sky-400 border-sky-500/30';
+      } else {
+        badge.className = 'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xl font-extrabold border bg-amber-500/15 text-amber-400 border-amber-500/30';
+      }
+
+      document.getElementById('text-rec-wh').innerText = recovered_wh.toFixed(1) + ' Wh';
+      document.getElementById('text-total-ke').innerText = 'Total Kinetic: ' + e_wh_total.toFixed(1) + ' Wh';
+
+      document.getElementById('pct-motor').innerText = pct_motor + '%';
+      document.getElementById('pct-friction').innerText = pct_friction + '%';
+      document.getElementById('bar-motor').style.width = pct_motor + '%';
+      document.getElementById('bar-friction').style.width = pct_friction + '%';
+
+      document.getElementById('diagnostic-log').innerHTML = diagNotes.map(n => `<p>${n}</p>`).join('');
+    }
+
+    // Dataset Sample Rows
+    const SAMPLE_ROWS = [
+      { id: 1, speed: 50.8, soc: 39.2, road: 'Dry', demand: 0.65, level: 'Medium', reason: 'Moderate dry braking' },
+      { id: 2, speed: 1.5, soc: 48.3, road: 'Dry', demand: 0.58, level: 'Low', reason: 'Low speed (< 10 km/h) back-EMF limit' },
+      { id: 3, speed: 53.3, soc: 55.0, road: 'Dry', demand: 0.93, level: 'High', reason: 'Heavy dry braking with ample battery space' },
+      { id: 4, speed: 69.9, soc: 46.4, road: 'Dry', demand: 0.87, level: 'High', reason: 'Optimal highway high deceleration' },
+      { id: 5, speed: 19.0, soc: 85.0, road: 'Slippery', demand: 0.13, level: 'Low', reason: 'Slippery traction boundary' },
+      { id: 6, speed: 99.6, soc: 96.0, road: 'Dry', demand: 0.59, level: 'Low', reason: 'High SOC (≥ 95%) overcharge protection' },
+      { id: 7, speed: 70.6, soc: 51.1, road: 'Wet', demand: 0.97, level: 'Medium', reason: 'Wet road capped at Medium to prevent slip' },
+      { id: 8, speed: 41.1, soc: 67.9, road: 'Dry', demand: 0.28, level: 'Low', reason: 'Gentle deceleration profile (< 0.30)' },
+      { id: 9, speed: 73.0, soc: 43.4, road: 'Slippery', demand: 0.18, level: 'Low', reason: 'Ice/snow surface yaw stability reserve' },
+      { id: 10, speed: 117.2, soc: 77.5, road: 'Dry', demand: 0.56, level: 'Medium', reason: 'High-speed standard deceleration' },
+      { id: 11, speed: 95.7, soc: 98.4, road: 'Dry', demand: 0.13, level: 'Low', reason: 'Battery full cut-off (SOC 98.4%)' },
+      { id: 12, speed: 37.2, soc: 80.4, road: 'Wet', demand: 0.94, level: 'Medium', reason: 'Wet surface traction safety cap' }
+    ];
+
+    function filterTable() {
+      const roadFilter = document.getElementById('filter-road').value;
+      const regenFilter = document.getElementById('filter-regen').value;
+      const tbody = document.getElementById('dataset-tbody');
+      tbody.innerHTML = '';
+
+      const filtered = SAMPLE_ROWS.filter(r => {
+        const matchRoad = roadFilter === 'All' || r.road === roadFilter;
+        const matchRegen = regenFilter === 'All' || r.level === regenFilter;
+        return matchRoad && matchRegen;
+      });
+
+      filtered.forEach(r => {
+        const badgeColor = r.level === 'High' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                         : r.level === 'Medium' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20'
+                         : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-[var(--muted-foreground)] font-mono">${r.id}</td>
+          <td class="py-2.5 px-3 font-semibold">${r.speed}</td>
+          <td class="py-2.5 px-3">${r.soc}%</td>
+          <td class="py-2.5 px-3">${r.road}</td>
+          <td class="py-2.5 px-3 font-mono">${r.demand}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded border font-bold ${badgeColor}">${r.level}</span></td>
+          <td class="py-2.5 px-3 text-[var(--muted-foreground)]">${r.reason}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Initialize
+    updateSim();
+    filterTable();
+  </script>
+</body>
+</html>
