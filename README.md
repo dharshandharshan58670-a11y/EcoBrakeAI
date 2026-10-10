@@ -35,9 +35,9 @@ Regenerative braking in Electric Vehicles (EVs) enables the capture and conversi
 
 **EcoBrake AI** presents an intelligent machine learning and physics simulation framework that determines the optimal regenerative braking level (**Low**, **Medium**, **High**) based on dynamic real-time parameters:
 * Vehicle velocity ($0$–$120\text{ km/h}$)
-* Battery State of Charge ($\text{SOC}$, $0$–$100\%$)
+* Battery State of Charge 
 * Road surface friction condition (**Dry**, **Wet**, **Slippery**)
-* Driver requested deceleration demand ($0.05$–$1.00$)
+* Driver requested deceleration demand 
 
 The system couples a **Scikit-Learn Random Forest Pipeline** with a **classical physics kinetic energy model** ($E_k = \frac{1}{2}mv^2$) to calculate illustrative recovered energy (in Watt-hours, $\text{Wh}$), evaluate scenario trade-offs, and visualize torque blending between the electric traction motor and hydraulic friction brakes.
 
