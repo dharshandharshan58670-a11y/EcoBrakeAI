@@ -13,6 +13,7 @@ from generate_dataset import generate_dataset_records, validate_records, import_
 from physics_engine import (
     calculate_kinetic_energy_joules,
     calculate_energy_recovery_wh,
+    calculate_motor_rpm,
     fallback_rule_predict,
     predict_regen_level,
     get_engineering_diagnosis
@@ -140,6 +141,30 @@ class TestEcoBrakeAI(unittest.TestCase):
         self.assertTrue(diag_valid['has_all_expected_inputs'])
         self.assertTrue(diag_valid['has_target'])
         self.assertEqual(diag_valid['total_rows'], 5000)
+
+    def test_10_motor_rpm_and_revolutions(self):
+        """Verify motor RPM and revolution kinematics."""
+        rpm_zero = calculate_motor_rpm(speed_kmh=0.0)
+        self.assertEqual(rpm_zero, 0.0, "RPM at 0 km/h must be 0")
+
+        rpm_60 = calculate_motor_rpm(speed_kmh=60.0, gear_ratio=9.0, wheel_radius_m=0.32)
+        self.assertGreater(rpm_60, 4000.0, "Motor RPM at 60 km/h with 9:1 gear ratio should be > 4000")
+        self.assertLess(rpm_60, 5000.0, "Motor RPM at 60 km/h with 9:1 gear ratio should be < 5000")
+
+    def test_11_energy_recovered_per_rev_monotonicity_and_bounds(self):
+        """Verify J/rev calculation is positive, non-negative at 0 speed, and scales with regen."""
+        rec_zero = calculate_energy_recovery_wh(1800, 0.0, "High")
+        self.assertEqual(rec_zero['energy_recovered_per_rev_j'], 0.0)
+        self.assertEqual(rec_zero['motor_rpm'], 0.0)
+        self.assertEqual(rec_zero['motor_revolutions'], 0.0)
+
+        rec_high = calculate_energy_recovery_wh(1800, 80.0, "High", brake_demand=0.7)
+        rec_med = calculate_energy_recovery_wh(1800, 80.0, "Medium", brake_demand=0.7)
+        rec_low = calculate_energy_recovery_wh(1800, 80.0, "Low", brake_demand=0.7)
+
+        self.assertGreater(rec_high['energy_recovered_per_rev_j'], rec_med['energy_recovered_per_rev_j'])
+        self.assertGreater(rec_med['energy_recovered_per_rev_j'], rec_low['energy_recovered_per_rev_j'])
+        self.assertGreater(rec_low['energy_recovered_per_rev_j'], 0.0)
 
 
 if __name__ == "__main__":

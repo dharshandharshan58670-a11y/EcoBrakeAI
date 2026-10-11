@@ -20,14 +20,43 @@ def calculate_kinetic_energy_joules(mass_kg: float, speed_kmh: float) -> float:
     return round(max(0.0, e_k), 2)
 
 
+def calculate_motor_rpm(
+    speed_kmh: float,
+    gear_ratio: float = 9.0,
+    wheel_radius_m: float = 0.32
+) -> float:
+    """
+    Computes electric motor RPM from vehicle linear speed, reduction gear ratio, and wheel radius:
+        v_ms = speed_kmh / 3.6
+        wheel_circumference = 2 * pi * wheel_radius_m
+        motor_rpm = (v_ms / wheel_circumference) * gear_ratio * 60
+    Guaranteed non-negative.
+    """
+    import math
+    s = max(0.0, float(speed_kmh))
+    if s <= 0.0:
+        return 0.0
+    v_ms = s / 3.6
+    r = max(0.01, float(wheel_radius_m))
+    g = max(0.1, float(gear_ratio))
+    wheel_circ = 2.0 * math.pi * r
+    rpm = (v_ms / wheel_circ) * g * 60.0
+    return round(max(0.0, rpm), 1)
+
+
 def calculate_energy_recovery_wh(
     mass_kg: float,
     speed_kmh: float,
     regen_level: str,
-    eta_powertrain: float = 0.77
+    eta_powertrain: float = 0.77,
+    gear_ratio: float = 9.0,
+    wheel_radius_m: float = 0.32,
+    brake_demand: float = 0.55
 ) -> dict:
     """
-    Computes illustrative kinetic energy recovery in Watt-hours (Wh).
+    Computes illustrative kinetic energy recovery in Watt-hours (Wh) and Joules,
+    as well as motor rotational kinematics: motor RPM, total motor revolutions during stop,
+    and electrical energy recovered per motor revolution in Joules per revolution (J/rev).
 
     Conversion: 1 Wh = 3600 Joules -> E_Wh = E_Joules / 3600
 
@@ -40,9 +69,14 @@ def calculate_energy_recovery_wh(
             * Inverter AC/DC Conversion (eta_inverter) ~ 95%
             * Battery Electrochemical Charge Acceptance (eta_battery) ~ 90%
             * Combined powertrain efficiency: 0.90 * 0.95 * 0.90 = ~77% (0.77)
+        - Powertrain rotational parameters:
+            * Single-speed reduction gear ratio (gear_ratio): default 9.0:1
+            * Wheel rolling radius (wheel_radius_m): default 0.32 m (~2.01 m circumference)
 
     Returns dictionary with full physical breakdown. Guaranteed non-negative.
     """
+    import math
+
     e_joules = calculate_kinetic_energy_joules(mass_kg, speed_kmh)
     e_wh_total = e_joules / 3600.0
 
@@ -56,6 +90,7 @@ def calculate_energy_recovery_wh(
 
     # Recovered energy stored in battery
     recovered_wh = e_wh_total * regen_fraction * max(0.0, min(1.0, eta_powertrain))
+    recovered_joules = recovered_wh * 3600.0
 
     # Thermal dissipation in brake pads & discs
     friction_dissipated_wh = e_wh_total * friction_fraction
@@ -63,16 +98,43 @@ def calculate_energy_recovery_wh(
     # Electrical and inverter heat loss
     electrical_loss_wh = (e_wh_total * regen_fraction) * (1.0 - eta_powertrain)
 
+    # Motor rotational speed (RPM)
+    s_kmh = max(0.0, float(speed_kmh))
+    v_ms = s_kmh / 3.6
+    r_w = max(0.01, float(wheel_radius_m))
+    g_ratio = max(0.1, float(gear_ratio))
+    wheel_circ = 2.0 * math.pi * r_w
+    motor_rpm = (v_ms / wheel_circ) * g_ratio * 60.0 if v_ms > 0 else 0.0
+
+    # Braking stop dynamics & motor revolutions
+    bd = max(0.05, min(1.0, float(brake_demand)))
+    a_decel = max(1.0, bd * 7.5)  # m/s^2 deceleration
+    stopping_dist_m = (v_ms ** 2) / (2.0 * a_decel) if v_ms > 0 else 0.0
+    stopping_time_s = v_ms / a_decel if v_ms > 0 else 0.0
+    motor_revs = (stopping_dist_m / wheel_circ) * g_ratio if v_ms > 0 else 0.0
+
+    # Electrical energy recovered per motor revolution (J/rev)
+    joules_per_rev = (recovered_joules / motor_revs) if motor_revs > 0 else 0.0
+
     return {
         "total_kinetic_energy_wh": round(max(0.0, e_wh_total), 2),
         "total_kinetic_energy_j": round(max(0.0, e_joules), 1),
         "recovered_energy_wh": round(max(0.0, recovered_wh), 2),
+        "recovered_energy_j": round(max(0.0, recovered_joules), 1),
         "friction_dissipated_wh": round(max(0.0, friction_dissipated_wh), 2),
         "electrical_loss_wh": round(max(0.0, electrical_loss_wh), 2),
         "regen_split_percent": int(round(regen_fraction * 100)),
         "friction_split_percent": int(round(friction_fraction * 100)),
-        "powertrain_efficiency_percent": int(round(eta_powertrain * 100))
+        "powertrain_efficiency_percent": int(round(eta_powertrain * 100)),
+        "motor_rpm": round(max(0.0, motor_rpm), 1),
+        "stopping_distance_m": round(max(0.0, stopping_dist_m), 2),
+        "stopping_time_s": round(max(0.0, stopping_time_s), 2),
+        "motor_revolutions": round(max(0.0, motor_revs), 1),
+        "energy_recovered_per_rev_j": round(max(0.0, joules_per_rev), 2),
+        "gear_ratio": round(g_ratio, 2),
+        "wheel_radius_m": round(r_w, 3)
     }
+
 
 
 def fallback_rule_predict(speed: float, soc: float, road: str, brake_demand: float) -> str:

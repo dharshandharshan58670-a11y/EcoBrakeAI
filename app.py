@@ -31,6 +31,7 @@ except ImportError:
 from physics_engine import (
     calculate_kinetic_energy_joules,
     calculate_energy_recovery_wh,
+    calculate_motor_rpm,
     fallback_rule_predict,
     predict_regen_level,
     get_engineering_diagnosis
@@ -279,6 +280,22 @@ default_mass = st.sidebar.number_input(
     step=50,
     help="Standard compact/mid-size EV mass (e.g., Tesla Model 3 ≈ 1840 kg, Nissan Leaf ≈ 1580 kg)"
 )
+gear_ratio = st.sidebar.number_input(
+    "Powertrain Gearbox Ratio (G : 1)",
+    min_value=1.0,
+    max_value=25.0,
+    value=9.0,
+    step=0.5,
+    help="Single-speed EV reduction gearbox ratio (e.g., Tesla Model 3 = 9.0:1, Nissan Leaf = 8.19:1)"
+)
+wheel_radius = st.sidebar.number_input(
+    "Wheel Rolling Radius (m)",
+    min_value=0.20,
+    max_value=0.50,
+    value=0.32,
+    step=0.01,
+    help="Effective tire rolling radius (standard 235/45 R18 tire ≈ 0.32 m, circumference ≈ 2.01 m)"
+)
 
 st.sidebar.markdown("### 🔌 Model Status")
 pipeline, model_status_msg, is_model_loaded = load_trained_model()
@@ -476,7 +493,10 @@ elif "2. Braking Simulator" in app_section:
         energy_data = calculate_energy_recovery_wh(
             mass_kg=mass_in,
             speed_kmh=speed_in,
-            regen_level=predicted_level
+            regen_level=predicted_level,
+            gear_ratio=gear_ratio,
+            wheel_radius_m=wheel_radius,
+            brake_demand=demand_in
         )
 
         diagnosis = get_engineering_diagnosis(
@@ -493,11 +513,17 @@ elif "2. Braking Simulator" in app_section:
         </div>
         """, unsafe_allow_html=True)
 
-        # Metric outputs
+        # Metric outputs (Row 1: Energy Totals)
         m1, m2, m3 = st.columns(3)
         m1.metric("Recovered Energy", f"{energy_data['recovered_energy_wh']} Wh", help="Recuperated electrical energy delivered to battery pack")
         m2.metric("Total Kinetic Energy", f"{energy_data['total_kinetic_energy_wh']} Wh", help="0.5 * m * v² converted to Wh")
         m3.metric("Motor Regen Share", f"{energy_data['regen_split_percent']}%", delta=f"{energy_data['friction_split_percent']}% Friction")
+
+        # Metric outputs (Row 2: Rotational Kinematics & Final J/rev Result)
+        m4, m5, m6 = st.columns(3)
+        m4.metric("⚡ Energy per Revolution", f"{energy_data['energy_recovered_per_rev_j']} J/rev", help="Electrical energy recuperated per one complete motor shaft rotation")
+        m5.metric("🔄 Motor Speed", f"{int(round(energy_data['motor_rpm'])):,} RPM", help=f"Traction motor rotational speed at {speed_in} km/h with gear ratio {gear_ratio}:1")
+        m6.metric("🛑 Deceleration Revolutions", f"{energy_data['motor_revolutions']} revs", help=f"Total motor revolutions during braking stop ({energy_data['stopping_distance_m']} m in {energy_data['stopping_time_s']} s)")
 
         # Braking force split donut chart
         fig_donut = go.Figure(data=[go.Pie(
@@ -555,6 +581,8 @@ elif "3. Energy Recovery Analysis" in app_section:
         st.latex(r"v = \frac{v_{\text{km/h}}}{3.6} \quad [\text{m/s}]")
         st.latex(r"E_{\text{Wh}} = \frac{E_k}{3600} \quad [\text{Watt-hours}]")
         st.latex(r"E_{\text{recovered}} = E_{\text{Wh}} \cdot f_{\text{regen}} \cdot \eta_{\text{powertrain}}")
+        st.latex(r"\text{RPM}_{\text{motor}} = \frac{v}{2 \pi r_w} \cdot G \cdot 60")
+        st.latex(r"E_{\text{rev}} = \frac{E_{\text{recovered (Joules)}}}{N_{\text{motor\_revs}}} \quad [\text{J/rev}]")
 
         st.markdown(r"""
         Where:
@@ -569,6 +597,10 @@ elif "3. Energy Recovery Analysis" in app_section:
             - Power Electronics / Inverter ($\eta_{\text{inverter}} \approx 95\%$)
             - Battery Electrochemical Charge Absorption ($\eta_{\text{battery}} \approx 90\%$)
             - $\eta_{\text{powertrain}} = 0.90 \times 0.95 \times 0.90 \approx 0.77$
+        - **$G$**: Transmission reduction gear ratio ($9.0:1$)
+        - **$r_w$**: Wheel rolling radius ($0.32\text{ m}$)
+        - **$N_{\text{motor\_revs}}$**: Total motor revolutions over stopping event ($s \cdot G / (2 \pi r_w)$)
+        - **$E_{\text{rev}}$**: Electrical energy recovered per motor shaft revolution ($\text{J/rev}$)
         """)
 
     with c2:
@@ -601,15 +633,15 @@ elif "3. Energy Recovery Analysis" in app_section:
     st.markdown("---")
     st.markdown("### 🧪 Sensitivity Explorer")
     test_speed = st.slider("Select Speed to Evaluate (km/h)", 0, 120, 80)
-    res_high = calculate_energy_recovery_wh(default_mass, test_speed, "High")
-    res_med = calculate_energy_recovery_wh(default_mass, test_speed, "Medium")
-    res_low = calculate_energy_recovery_wh(default_mass, test_speed, "Low")
+    res_high = calculate_energy_recovery_wh(default_mass, test_speed, "High", gear_ratio=gear_ratio, wheel_radius_m=wheel_radius)
+    res_med = calculate_energy_recovery_wh(default_mass, test_speed, "Medium", gear_ratio=gear_ratio, wheel_radius_m=wheel_radius)
+    res_low = calculate_energy_recovery_wh(default_mass, test_speed, "Low", gear_ratio=gear_ratio, wheel_radius_m=wheel_radius)
 
     sc1, sc2, sc3, sc4 = st.columns(4)
     sc1.metric("Total Kinetic Energy", f"{res_high['total_kinetic_energy_wh']} Wh")
-    sc2.metric("High Regen Recovery", f"{res_high['recovered_energy_wh']} Wh", "65% capture")
-    sc3.metric("Medium Regen Recovery", f"{res_med['recovered_energy_wh']} Wh", "45% capture")
-    sc4.metric("Low Regen Recovery", f"{res_low['recovered_energy_wh']} Wh", "20% capture")
+    sc2.metric("High Regen Recovery", f"{res_high['recovered_energy_wh']} Wh", f"{res_high['energy_recovered_per_rev_j']} J/rev")
+    sc3.metric("Medium Regen Recovery", f"{res_med['recovered_energy_wh']} Wh", f"{res_med['energy_recovered_per_rev_j']} J/rev")
+    sc4.metric("Low Regen Recovery", f"{res_low['recovered_energy_wh']} Wh", f"{res_low['energy_recovered_per_rev_j']} J/rev")
 
 
 # ==============================================================================
@@ -638,7 +670,10 @@ elif "4. Scenario Comparison" in app_section:
         phys = calculate_energy_recovery_wh(
             mass_kg=default_mass,
             speed_kmh=sc['speed_kmh'],
-            regen_level=pred_level
+            regen_level=pred_level,
+            gear_ratio=gear_ratio,
+            wheel_radius_m=wheel_radius,
+            brake_demand=sc['brake_demand']
         )
         results.append({
             "Scenario": sc["Scenario"],
@@ -647,8 +682,12 @@ elif "4. Scenario Comparison" in app_section:
             "Road Surface": sc["road_condition"],
             "Brake Demand": sc["brake_demand"],
             "AI Recommended Level": pred_level,
+            "Motor Speed (RPM)": int(round(phys["motor_rpm"])),
+            "Stop Distance (m)": phys["stopping_distance_m"],
+            "Motor Revs (rev)": phys["motor_revolutions"],
             "Total Kinetic (Wh)": phys["total_kinetic_energy_wh"],
             "Recovered Energy (Wh)": phys["recovered_energy_wh"],
+            "Recovered Energy (J/rev)": phys["energy_recovered_per_rev_j"],
             "Regen Share (%)": phys["regen_split_percent"],
             "Friction Share (%)": phys["friction_split_percent"]
         })

@@ -35,9 +35,9 @@ Regenerative braking in Electric Vehicles (EVs) enables the capture and conversi
 
 **EcoBrake AI** presents an intelligent machine learning and physics simulation framework that determines the optimal regenerative braking level (**Low**, **Medium**, **High**) based on dynamic real-time parameters:
 * Vehicle velocity ($0$–$120\text{ km/h}$)
-* Battery State of Charge 
+* Battery State of Charge ($\text{SOC}$, $0$–$100\%$)
 * Road surface friction condition (**Dry**, **Wet**, **Slippery**)
-* Driver requested deceleration demand 
+* Driver requested deceleration demand ($0.05$–$1.00$)
 
 The system couples a **Scikit-Learn Random Forest Pipeline** with a **classical physics kinetic energy model** ($E_k = \frac{1}{2}mv^2$) to calculate illustrative recovered energy (in Watt-hours, $\text{Wh}$), evaluate scenario trade-offs, and visualize torque blending between the electric traction motor and hydraulic friction brakes.
 
@@ -193,8 +193,21 @@ $$\eta_{\text{powertrain}} = 0.90 \times 0.95 \times 0.90 \approx 0.77 \quad (77
 
 ### 4. Net Recovered Energy
 $$E_{\text{recovered}} = E_{\text{Wh}} \times f_{\text{regen}} \times \eta_{\text{powertrain}} \quad [\text{Wh}]$$
+$$E_{\text{recovered, Joules}} = E_{\text{recovered}} \times 3600 \quad [\text{Joules}]$$
 
 **Boundary Invariant:** $E_{\text{recovered}} \ge 0$. If $v = 0$, $E_{\text{recovered}} = 0\text{ Wh}$.
+
+### 5. Motor Rotational Kinematics
+Given single-speed transmission reduction gear ratio $G$ (default $9.0:1$) and tire rolling radius $r_w$ (default $0.32\text{ m}$, circumference $C_w = 2 \pi r_w \approx 2.01\text{ m}$):
+$$\text{RPM}_{\text{motor}} = \left(\frac{v_{\text{m/s}}}{2 \pi r_w}\right) \times G \times 60 \quad [\text{RPM}]$$
+
+### 6. Electrical Energy Recovered per Motor Revolution ($E_{\text{rev}}$)
+Over a deceleration stopping event from initial velocity $v$ with deceleration $a = \max(1.0, \text{brake\_demand} \times 7.5)\text{ m/s}^2$:
+* Stopping distance: $s = \frac{v^2}{2a}\text{ m}$
+* Total motor revolutions: $N_{\text{motor\_revs}} = \left(\frac{s}{2 \pi r_w}\right) \times G$
+* Energy recovered per revolution:
+$$E_{\text{rev}} = \frac{E_{\text{recovered, Joules}}}{N_{\text{motor\_revs}}} \quad [\text{J/rev}]$$
+* **Boundary Invariant:** If $v = 0$, $E_{\text{rev}} = 0.0\text{ J/rev}$.
 
 ---
 
@@ -205,7 +218,7 @@ EcoBrakeAI/
 ├── generate_dataset.py            # Reproducible 5,000-sample synthetic dataset generator
 ├── train_model.py                 # Scikit-learn Random Forest training pipeline
 ├── physics_engine.py              # Zero-dependency EV kinetic mechanics & heuristic engine
-├── test_ecobrake.py               # Unit & integration test suite (9 passing tests)
+├── test_ecobrake.py               # Unit & integration test suite (11 passing tests)
 ├── evaluate_baseline_metrics.py   # Benchmark metrics generator
 ├── render_confusion_matrix_png.py # Pure-Python confusion matrix PNG renderer
 ├── ev_regenerative_braking.csv    # Generated 5,000-scenario dataset
